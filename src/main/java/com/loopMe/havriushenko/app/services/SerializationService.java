@@ -38,14 +38,12 @@ public class SerializationService {
     }
 
     private void createFileIfNotExist() throws IOException {
-        if (isFilePresent()) {
             if (!file.isDirectory()) {
                 Files.createDirectories(Paths.get(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(File.separator))));
             }
             if (!file.exists()) {
                 file.createNewFile();
             }
-        }
     }
 
     public Object read() {
