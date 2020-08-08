@@ -59,7 +59,7 @@ public class SerializationService {
     }
 
     private boolean isFilePresent() {
-        if(Objects.nonNull(this.file)){
+        if(Objects.nonNull(this.file) && file.exists()){
             return true;
         }
         throw new NullPointerException(FILE_IS_NULL_MESSAGE);
