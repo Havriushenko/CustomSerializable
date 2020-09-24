@@ -1,6 +1,9 @@
 package com.loopMe.havriushenko.app.services;
 
+
+import com.loopMe.havriushenko.app.converter.Converter;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -11,57 +14,71 @@ import static com.loopMe.havriushenko.app.utils.Constants.DefaultFilePath.*;
 import static com.loopMe.havriushenko.app.utils.Constants.ErrorMessages.FILE_IS_NULL_MESSAGE;
 import static com.loopMe.havriushenko.app.utils.Constants.ErrorMessages.PATH_COULD_NOT_BE_EMPTY_MESSAGE;
 
+@Service
 public class SerializationService {
 
+
     private File file = null;
+    private Converter converter;
 
     public SerializationService() {
         this.file = new File(ABSOLUTE_PATH + FILE_PATH + FILE_NAME);
     }
 
-    public SerializationService(String path) {
-        if(StringUtils.isEmpty(path)){
+    public SerializationService(Converter converter) {
+        this();
+        this.converter = converter;
+    }
+
+    public SerializationService(String path, Converter converter) {
+        if (StringUtils.isEmpty(path)) {
             throw new NullPointerException(PATH_COULD_NOT_BE_EMPTY_MESSAGE);
         }
         this.file = new File(path);
+        this.converter = converter;
     }
 
-    public boolean save(Object o) throws IOException {
-        createFileIfNotExist();
-        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(this.file))) {
-            objectOutputStream.writeObject(o);
+    private void createFileIfNotExist() throws IOException {
+        if (!file.isDirectory()) {
+            Files.createDirectories(Paths.get(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(File.separator))));
+        }
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+    }
+
+    private boolean isFilePresent() {
+        if (Objects.nonNull(this.file) && file.exists()) {
             return true;
-        } catch (IOException e) {
-            e.getMessage();
+        }
+        throw new NullPointerException(FILE_IS_NULL_MESSAGE);
+    }
+
+    public boolean customSave(Object obj) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(this.file)) {
+            createFileIfNotExist();
+
+            byte[] bytes = converter.convertToArrayBytes(obj);
+            fileOutputStream.write(bytes);
+            return true;
+        } catch (IOException ex) {
+            System.err.println(ex.getMessage());
             return false;
         }
     }
 
-    private void createFileIfNotExist() throws IOException {
-            if (!file.isDirectory()) {
-                Files.createDirectories(Paths.get(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(File.separator))));
-            }
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-    }
-
-    public Object read() {
-        if(isFilePresent()) {
-            try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(this.file))) {
-                return objectInputStream.readObject();
-            } catch (ClassNotFoundException | IOException e) {
-                e.getMessage();
-                return null;
-            }
+    public Object customRead() {
+        try (FileInputStream fileInputStream = new FileInputStream(this.file)) {
+            byte bytes[] = new byte[(int) this.file.length()];
+            fileInputStream.read(bytes);
+            return converter.convertToObject(bytes);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
         return null;
-    }
-
-    private boolean isFilePresent() {
-        if(Objects.nonNull(this.file) && file.exists()){
-            return true;
-        }
-        throw new NullPointerException(FILE_IS_NULL_MESSAGE);
     }
 }
