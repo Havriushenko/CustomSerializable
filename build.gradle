@@ -1,5 +1,8 @@
 plugins {
     id 'java'
+    id 'idea'
+    id 'org.springframework.boot' version '2.3.2.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
 }
 
 group 'CustomSerializable'
@@ -11,8 +14,11 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
-
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.0.1'
+    
     testImplementation('org.junit.jupiter:junit-jupiter:5.6.2')
 }
 
